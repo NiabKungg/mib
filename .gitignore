@@ -1,0 +1,18 @@
+# secrets / runtime data — ห้าม commit
+worker.env
+hub.env
+*.env
+!*.env.example
+*.sqlite3
+*.sqlite3-wal
+*.sqlite3-shm
+*.gguf
+models/
+data/
+
+# build / dev
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+uv.lock.bak

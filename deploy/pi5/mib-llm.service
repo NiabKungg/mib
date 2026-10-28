@@ -1,0 +1,23 @@
+[Unit]
+Description=MIB brain: llama-server with LiquidAI LFM3-1.7B (QAD Q4_0)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=pi5
+WorkingDirectory=/home/pi5/mib
+# -t 3 decodes fastest on the Pi 5 (11.9 tok/s vs 11.1 with 4); -tb 4 prefills fastest (97 tok/s).
+ExecStart=/home/pi5/mib/src/llama.cpp/build/bin/llama-server \
+    --model /home/pi5/mib/models/LFM3-1.7B-QAD-Q4_0.gguf \
+    --alias LFM3-1.7B-QAD-Q4_0 \
+    --host 127.0.0.1 --port 8081 \
+    --ctx-size 16384 --parallel 1 \
+    --threads 3 --threads-batch 4 \
+    --jinja --metrics --no-webui
+Restart=always
+RestartSec=5
+Nice=5
+
+[Install]
+WantedBy=multi-user.target
