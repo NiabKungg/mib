@@ -10,7 +10,7 @@ export const StatusPill = {
     label: { type: String, default: '' },
     pulse: { type: Boolean, default: false },
   },
-  template: `<span class="pill" :class="'pill--'+status"><span class="status-dot" :class="['status-dot--'+status, pulse && 'status-dot--pulse']"></span>{{ label }}</span>`,
+  template: `<span class="pill" :class="'pill--'+status"><span class="status-dot" :class="['status-dot--'+status, pulse && 'status-dot--pulse']"></span><span v-if="label" class="pill__text">{{ label }}</span></span>`,
 };
 
 export const Sparkline = {

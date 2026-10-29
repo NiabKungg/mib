@@ -62,11 +62,12 @@ export const BriefPreview = {
   template: `
   <div>
     <div v-if="brief.full" class="brief-live">
-      <div style="margin-bottom:12px;display:flex;align-items:center;gap:8px;color:var(--ok);font-size:12.5px;font-weight:700">
+      <div class="brief-live__ready">
         <icon name="check-circle" :size="14"/>Brief ready
-        <a :href="'#/briefs/'+brief.full.id" class="btn btn--sm" style="margin-left:auto"><icon name="external-link" :size="12"/>Open brief</a>
+        <a :href="'#/briefs/'+brief.full.id" class="btn btn--sm"><icon name="external-link" :size="12"/>Open brief</a>
       </div>
-      <doc-body :doc="brief.full.doc"/>
+      <div class="brief-live__headline">{{ brief.full.doc.headline }}</div>
+      <div class="reader reader--compact"><doc-body :doc="brief.full.doc"/></div>
     </div>
     <div v-else-if="brief.partialDoc" class="brief-live">
       <div v-if="brief.partialDoc.headline" class="brief-live__headline">{{ brief.partialDoc.headline }}<span class="llm-cursor"></span></div>

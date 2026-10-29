@@ -107,7 +107,7 @@ export const SourcesView = {
                 <button type="button" class="btn btn--icon btn--ghost" @click="removeFeed(i)" aria-label="Remove feed"><icon name="trash" :size="14"/></button>
               </div>
             </div>
-            <button type="button" class="btn btn--sm" style="margin-top:8px" @click="addFeed"><icon name="plus" :size="13"/>Add feed</button>
+            <button type="button" class="btn btn--sm btn--add" style="margin-top:8px" @click="addFeed"><icon name="plus" :size="13"/>Add feed</button>
           </div>
         </div>
       </div>

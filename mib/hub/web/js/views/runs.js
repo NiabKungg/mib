@@ -64,16 +64,16 @@ export const RunsListView = {
           <thead><tr><th>Run</th><th>Kind</th><th>Trigger</th><th>Status</th><th>Duration</th><th>Items</th><th>Brief</th></tr></thead>
           <tbody>
             <tr v-for="r in runs" :key="r.id" class="is-clickable" @click="go(r.id)">
-              <td class="tabular muted">#{{ r.id }}</td>
-              <td style="text-transform:capitalize">{{ r.kind }}</td>
-              <td>
+              <td class="tabular muted" data-label="Run">#{{ r.id }}</td>
+              <td style="text-transform:capitalize" data-label="Kind">{{ r.kind }}</td>
+              <td data-label="Trigger">
                 <span v-if="r.trigger==='telegram'" class="badge badge--telegram"><icon name="send" :size="9"/>via Telegram /now</span>
                 <span v-else class="muted">{{ triggerLabel(r.trigger) }}</span>
               </td>
-              <td><span class="pill" :class="'pill--'+statusVariant(r.status)">{{ r.status }}</span></td>
-              <td class="tabular">{{ duration(r) }}</td>
-              <td class="tabular">{{ itemsStat(r) }}</td>
-              <td>
+              <td data-label="Status"><span class="pill" :class="'pill--'+statusVariant(r.status)">{{ r.status }}</span></td>
+              <td class="tabular" data-label="Duration">{{ duration(r) }}</td>
+              <td class="tabular" data-label="Items">{{ itemsStat(r) }}</td>
+              <td data-label="Brief">
                 <a v-if="r.brief_id" :href="'#/briefs/'+r.brief_id" @click.stop class="btn btn--sm btn--ghost"><icon name="briefs" :size="12"/></a>
                 <span v-else class="muted">—</span>
               </td>
@@ -133,20 +133,20 @@ export const RunView = {
   },
   template: `
   <div class="view">
-    <a href="#/runs" class="btn btn--ghost btn--sm" style="align-self:flex-start"><icon name="chevron-right" :size="13" style="transform:rotate(180deg)"/>All runs</a>
+    <a href="#/runs" class="btn btn--ghost btn--sm view-back" style="align-self:flex-start"><icon name="chevron-right" :size="13" style="transform:rotate(180deg)"/>All runs</a>
     <div v-if="loading" class="panel"><div class="panel__body"><span class="muted">Loading&hellip;</span></div></div>
     <empty-state v-else-if="notFound" icon="x-circle" title="Run not found"/>
     <template v-else>
       <run-stepper :run="timeline.run"/>
-      <div class="grid-2">
-        <div style="display:flex;flex-direction:column;gap:var(--sp-5)">
+      <div class="live-grid">
+        <div class="stack live-side">
+          <div class="panel"><div class="panel__head"><div class="panel__title"><icon name="brain" :size="15"/>LLM console</div></div><div class="panel__body"><llm-console :phases="timeline.llmPhases"/></div></div>
+          <div class="panel"><div class="panel__head"><div class="panel__title"><icon name="briefs" :size="15"/>Brief</div></div><div class="panel__body preview-pane"><brief-preview :brief="timeline.brief"/></div></div>
+        </div>
+        <div class="stack live-main">
           <div class="panel"><div class="panel__head"><div class="panel__title"><icon name="sources" :size="15"/>Sources</div></div><div class="panel__body"><source-grid :sources="timeline.sources"/></div></div>
           <div class="panel"><div class="panel__head"><div class="panel__title"><icon name="items" :size="15"/>Items</div></div><div class="panel__body"><item-feed :items="timeline.items"/></div></div>
           <div class="panel"><div class="panel__head"><div class="panel__title"><icon name="globe" :size="15"/>Crawl pages</div></div><div class="panel__body"><crawl-feed :pages="timeline.pages"/></div></div>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:var(--sp-5)">
-          <div class="panel"><div class="panel__head"><div class="panel__title"><icon name="brain" :size="15"/>LLM console</div></div><div class="panel__body"><llm-console :phases="timeline.llmPhases"/></div></div>
-          <div class="panel"><div class="panel__head"><div class="panel__title"><icon name="briefs" :size="15"/>Brief</div></div><div class="panel__body scroll-pane" style="max-height:560px"><brief-preview :brief="timeline.brief"/></div></div>
         </div>
       </div>
       <div class="panel"><div class="panel__head"><div class="panel__title"><icon name="live" :size="15"/>Run log</div></div><run-log :logs="timeline.logs"/></div>

@@ -50,14 +50,14 @@ export const BriefsListView = {
           <thead><tr><th>Date</th><th>Kind</th><th>Headline</th><th>Delivery</th><th>Stats</th></tr></thead>
           <tbody>
             <tr v-for="b in briefs" :key="b.id" class="is-clickable" @click="go(b.id)">
-              <td class="tabular" style="white-space:nowrap">{{ fmtDate(b.date) }}</td>
-              <td><span class="badge">{{ b.kind }}</span></td>
-              <td><a :href="'#/briefs/'+b.id" @click.stop class="truncate" style="max-width:420px;display:inline-block;vertical-align:middle">{{ b.headline }}</a></td>
-              <td>
+              <td class="tabular" style="white-space:nowrap" data-label="Date">{{ fmtDate(b.date) }}</td>
+              <td data-label="Kind"><span class="badge">{{ b.kind }}</span></td>
+              <td class="table-cell--title" data-label="Headline"><a :href="'#/briefs/'+b.id" @click.stop class="truncate brief-row-link">{{ b.headline }}</a></td>
+              <td data-label="Delivery">
                 <span v-if="b.delivered_at" class="pill pill--ok"><icon name="check" :size="11"/>{{ fmtRelative(b.delivered_at) }}</span>
                 <span v-else class="pill pill--muted">not sent</span>
               </td>
-              <td class="muted tabular">
+              <td class="muted tabular" data-label="Stats">
                 <template v-if="b.stats">{{ b.stats.items_kept }}/{{ b.stats.items_considered }} kept &middot; {{ b.stats.gen_tps ? b.stats.gen_tps.toFixed(1)+' tok/s' : '—' }}</template>
               </td>
             </tr>
@@ -95,7 +95,7 @@ export const BriefView = {
   },
   template: `
   <div class="view">
-    <a href="#/briefs" class="btn btn--ghost btn--sm" style="align-self:flex-start"><icon name="chevron-right" :size="13" style="transform:rotate(180deg)"/>All briefs</a>
+    <a href="#/briefs" class="btn btn--ghost btn--sm view-back" style="align-self:flex-start"><icon name="chevron-right" :size="13" style="transform:rotate(180deg)"/>All briefs</a>
     <div v-if="loading" class="panel"><div class="panel__body"><span class="muted">Loading&hellip;</span></div></div>
     <div v-else-if="error" class="panel"><div class="panel__body"><empty-state icon="x-circle" title="Could not load brief" :hint="error"/></div></div>
     <div v-else class="panel"><div class="panel__body"><brief-reader :brief="brief"/></div></div>

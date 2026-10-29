@@ -73,6 +73,25 @@ const App = {
     tgStatus() {
       return telegramStatus(this.state.telegram);
     },
+    // Phones get one pill naming the worst component; Live's topology has the per-node detail.
+    systemPill() {
+      const l = this.state.llm;
+      const parts = [
+        ...this.state.workers.map((w) => ({
+          name: w.host || w.id,
+          v: w.online ? (w.busy ? 'warn' : 'ok') : 'muted',
+          word: w.online ? (w.busy ? 'busy' : 'online') : 'offline',
+        })),
+        { name: 'Brain', v: l.online ? (l.busy ? 'warn' : 'ok') : 'muted', word: l.online ? (l.busy ? 'busy' : 'ready') : 'offline' },
+        { name: 'Telegram', v: this.tgStatus.v, word: this.tgStatus.short },
+      ];
+      const title = parts.map((p) => `${p.name} ${p.word}`).join(' · ');
+      if (!this.state.workers.length) return { v: 'muted', label: 'No worker', pulse: false, title };
+      const rank = { ok: 0, warn: 1, muted: 2, error: 3 };
+      const worst = parts.reduce((a, b) => (rank[b.v] > rank[a.v] ? b : a));
+      if (worst.v === 'ok') return { v: 'ok', label: 'All online', pulse: false, title };
+      return { v: worst.v, label: `${worst.name} ${worst.word}`, pulse: worst.v === 'warn', title };
+    },
   },
   methods: {
     isActive(n) {
@@ -98,18 +117,19 @@ const App = {
         <span class="brand-mark">MIB</span><span class="brand-name">Morning Intelligence Brief</span>
       </div>
       <div class="topbar__status">
-        <status-pill v-for="w in state.workers" :key="w.id"
-          :status="w.online ? (w.busy ? 'warn' : 'ok') : 'muted'" :pulse="w.online && w.busy"
+        <status-pill v-for="w in state.workers" :key="w.id" class="hide-sm" :status="w.online ? (w.busy ? 'warn' : 'ok') : 'muted'" :pulse="w.online && w.busy"
           :label="(w.host || w.id) + ' ' + (w.online ? (w.busy ? 'busy' : 'online') : 'offline')"/>
-        <status-pill :status="state.llm.online ? (state.llm.busy ? 'warn' : 'ok') : 'muted'" :pulse="state.llm.online && state.llm.busy"
+        <status-pill class="hide-sm" :status="state.llm.online ? (state.llm.busy ? 'warn' : 'ok') : 'muted'" :pulse="state.llm.online && state.llm.busy"
           :label="'Brain ' + (state.llm.online ? (state.llm.busy ? 'busy' : 'ready') : 'offline')"/>
-        <status-pill :status="tgStatus.v" :pulse="tgStatus.pulse" :label="'Telegram ' + tgStatus.label"/>
+        <status-pill :status="tgStatus.v" :pulse="tgStatus.pulse" :title="'Telegram: ' + tgStatus.label"
+          :label="'Telegram ' + tgStatus.short" class="hide-sm"/>
+        <status-pill class="show-sm" :status="systemPill.v" :pulse="systemPill.pulse" :label="systemPill.label" :title="systemPill.title"/>
       </div>
       <div class="topbar__right">
         <span class="conn-dot" :class="state.connected" :title="'Live updates: ' + state.connected"></span>
         <div class="clock">
           <div class="clock__time tabular">{{ clockTime }}</div>
-          <div v-if="nextBrief" class="clock__countdown tabular">Next brief {{ fmtTime(nextBrief.at, state.tz) }} &middot; {{ fmtCountdown(nextBrief.at, clock) }}</div>
+          <div v-if="nextBrief" class="clock__countdown tabular"><span class="hide-sm">Next brief </span>{{ fmtTime(nextBrief.at, state.tz) }} &middot; {{ fmtCountdown(nextBrief.at, clock) }}</div>
         </div>
       </div>
     </header>

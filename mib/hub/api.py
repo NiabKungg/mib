@@ -173,6 +173,7 @@ def create_app() -> FastAPI:
         except SettingsError as exc:
             raise HTTPException(422, str(exc)) from None
         bus.publish({"type": "settings", "settings": public})
+        telegram_bot.wake()  # token/chat edits take effect now, not after the current poll/backoff
         return public
 
     @app.post("/api/delivery/test")

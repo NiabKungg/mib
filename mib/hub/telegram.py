@@ -221,6 +221,7 @@ class TelegramBot:
         self._last_chat_id: str | None = None
         self._backoff = BACKOFF_START_S
         self._now_task: asyncio.Task | None = None
+        self._wake = asyncio.Event()  # set by wake(): settings changed, re-read them now
         # testability knobs (sane production defaults; tests may lower them)
         self.idle_poll_s = IDLE_POLL_S
         self.edit_interval_s = EDIT_INTERVAL_S
@@ -282,7 +283,7 @@ class TelegramBot:
             if not token:
                 self._set(bot_username=None, link_url=None)
             self._last_token, self._last_chat_id = token, chat_id
-            await asyncio.sleep(self.idle_poll_s)
+            await self._nap(self.idle_poll_s)
             return
 
         if token != self._last_token:
@@ -299,7 +300,9 @@ class TelegramBot:
             self._last_chat_id = chat_id
 
         try:
-            updates = await self._api.get_updates(token, self._offset, POLL_TIMEOUT_S)
+            updates = await self._poll(token)
+            if updates is None:
+                return  # settings changed mid-poll: re-read them on the next tick
         except TelegramAPIError as exc:
             await self._on_api_error(exc)
             return
@@ -322,8 +325,35 @@ class TelegramBot:
             except (TelegramAPIError, httpx.HTTPError):
                 log.warning("telegram: failed to handle an update", exc_info=True)
 
+    def wake(self) -> None:
+        """Called when settings change so a token/chat edit in the web UI takes effect immediately."""
+        self._backoff = BACKOFF_START_S
+        self._wake.set()
+
+    async def _nap(self, seconds: float) -> None:
+        try:
+            await asyncio.wait_for(self._wake.wait(), timeout=seconds)
+        except asyncio.TimeoutError:
+            pass
+        self._wake.clear()
+
+    async def _poll(self, token: str) -> list | None:
+        """getUpdates long-poll that a wake() interrupts (cancelling it consumes no updates)."""
+        poll = asyncio.create_task(self._api.get_updates(token, self._offset, POLL_TIMEOUT_S))
+        woken = asyncio.create_task(self._wake.wait())
+        try:
+            await asyncio.wait({poll, woken}, return_when=asyncio.FIRST_COMPLETED)
+        finally:
+            woken.cancel()
+        if poll.done():
+            return poll.result()
+        poll.cancel()
+        await asyncio.gather(poll, return_exceptions=True)
+        self._wake.clear()
+        return None
+
     async def _sleep_backoff(self) -> None:
-        await asyncio.sleep(self._backoff)
+        await self._nap(self._backoff)
         self._backoff = min(self._backoff * 2, BACKOFF_CAP_S)
 
     async def _on_api_error(self, exc: TelegramAPIError) -> None:

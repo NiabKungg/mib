@@ -5,10 +5,6 @@ runs LiquidAI **LFM3-1.7B** locally to filter junk, connect stories across sourc
 summary, delivered to Telegram (and/or Discord) every morning at 07:30 — or on demand with `/now`. A live web UI
 lets you trigger news or web crawls and watch every stage happen in real time.
 
-> **Status:** this is the live system used by the team — `mib-worker.service` runs on the Pi 4 and
-> `mib-hub.service` + `mib-llm.service` run on the Pi 5. Course project for **05506007 Operating Systems**
-> (Computer Science, KMUTT, semester 1/2569).
-
 ```mermaid
 flowchart LR
     subgraph Pi4["Pi 4 (2 GB) · Worker"]
@@ -59,8 +55,32 @@ with llama.cpp b11960 (`llama-bench`):
 | 3 | 76.0 tok/s | 70.9 tok/s | **11.9 tok/s** |
 | 4 | **97.0 tok/s** | 91.3 tok/s | 11.1 tok/s |
 
-so `llama-server` runs with `--threads 3 --threads-batch 4`. Thinking mode is off: LFM3 reasons for 700–1500 tokens
-before answering, i.e. minutes per call at 11 tok/s.
+Decode also slows as the context grows, and llama.cpp's CPU flash-attention kernel is the cause:
+
+| Decode, 3 threads | Empty context | 3k-token context (the brief prompt) |
+|---|---:|---:|
+| flash attention on (llama.cpp default) | 11.3 tok/s | 8.4 tok/s |
+| **flash attention off** | 11.4 tok/s | **10.8 tok/s** |
+
+so `llama-server` runs with `--threads 3 --threads-batch 4 --flash-attn off --ubatch-size 256` (the smaller
+micro-batch wins back the ~3% prefill flash attention was worth). Replaying real MIB prompts, that writes the brief
+at 10.2 instead of 8.0 tok/s and triages at 11.0–11.2 instead of 10.3–10.5 tok/s, with the same model file and
+sampling. It changed 2 of 30 triage keep/drop decisions in a greedy replay; two ordinary production runs (temperature
+0.1) already differ in 4 of 30. Thinking mode is off: LFM3 reasons for 700–1500 tokens before answering, i.e.
+minutes per call at 11 tok/s.
+
+Measured and not used:
+
+- **Speculative decoding.** LFM3 has no smaller text model sharing its 128k vocabulary and the GGUF has no MTP
+  heads, so no draft model. Self-speculative n-gram drafting (`ngram-simple`, `ngram-map-k`, `ngram-map-k4v`,
+  `ngram-mod`, `ngram-cache`) gained at most 6% on triage JSON and 0 to −20% on the brief, whose paraphrased text
+  rarely repeats.
+- **Parallel slots** (`--parallel 4`). Three triage batches plus a connection check took 134 s instead of 161 s, but
+  batched decoding changed 6 of 10 greedy triage verdicts. One slot stays.
+- **4 decode threads** (slower: memory bandwidth, not cores, is the limit at ~1 GB read per token), **q8_0 KV
+  cache** (10.1 tok/s at 3k context, lossy), larger micro-batches (slower prefill).
+- **Grammar overhead**: the brief decodes at the same speed without its GBNF grammar, so constraining output is
+  free.
 
 ## How the brief is made
 
@@ -139,34 +159,16 @@ tests/        unit tests for the deterministic logic
 
 | What | Where |
 |---|---|
-| Web UI | `http://raspberrypi.local:8800` or `http://192.168.1.125:8800` on the home LAN; from anywhere: `ssh -N -L 8800:localhost:8800 pi5` then `http://localhost:8800` |
+| Web UI | `http://raspberrypi.local:8800` on the local network, or from anywhere: `ssh -N -L 8800:localhost:8800 pi5` then `http://localhost:8800` |
 | Hub / LLM logs | `journalctl -u mib-hub -f`, `journalctl -u mib-llm -f` (pi5) |
 | Worker logs | `journalctl -u mib-worker -f` (pi4) |
 | Data | `~/mib/data/mib.sqlite3` (pi5), `~/mib/data/worker.sqlite3` (pi4 outbox) |
 | Deploy changes | `deploy/deploy.sh [all\|pi5\|pi4]` from this repo (rsync + `uv sync --frozen` + systemd units + restart) |
 | Fresh Pi 5 | `bash ~/mib/app/deploy/pi5/setup-llm.sh` once (builds llama.cpp b11960, downloads + verifies the model) |
 
-The worker reaches the hub at the Pi 5's LAN address (`~/mib/worker.env`); give the Pi 5 a DHCP reservation.
-
-## Hotspot / changing networks (demo day)
-
-`deploy.sh` writes the Pi 5's **IP at deploy time** into `~/mib/worker.env`, so after moving to a new network
-(a phone hotspot for a live demo) that IP goes stale. The live Pi 4 is already configured with the
-LAN-independent form instead:
-
-```
-MIB_HUB_WS=ws://raspberrypi.local:8800/ws/worker
-```
-
-Both Pis announce themselves over mDNS (`pi4.local`, `raspberrypi.local`), so the WebSocket survives any IP
-change as long as both are on the same hotspot. Before the event, register the venue's WiFi on **both** Pis:
-
-```bash
-sudo bash setup_hotspot.sh "VenueSSID" "password"   # 1 ครั้ง/เครื่อง — จำ network ไว้อัตโนมัติ
-```
-
-If the hotspot has client isolation (mDNS blocked), give the Pi 5 a DHCP reservation and put its IP back in
-`worker.env`, or reach the hub through the Pis' Cloudflare tunnels.
+The worker reaches the hub by the Pi 5's mDNS name (`ws://raspberrypi.local:8800` in `~/mib/worker.env`), so
+both Pis keep working when the network hands out new IPs (a phone hotspot with the home Wi-Fi's name, a new router).
+It needs multicast between Wi-Fi clients; networks that isolate clients block mDNS and the Pis from each other.
 
 Google Calendar: **Settings → (calendar) → Integrate calendar → Secret address in iCal format**, paste it under
 **Sources → Calendar**.

@@ -63,8 +63,19 @@ export const LiveView = {
     <command-bar/>
     <run-stepper :run="timeline.run"/>
 
-    <div class="grid-2">
-      <div class="stack" style="display:flex;flex-direction:column;gap:var(--sp-5)">
+    <div class="live-grid">
+      <div class="stack live-side">
+        <div class="panel">
+          <div class="panel__head"><div class="panel__title"><icon name="brain" :size="15"/>LLM console</div><div class="panel__sub">{{ state.llm.model }}</div></div>
+          <div class="panel__body"><llm-console :phases="timeline.llmPhases"/></div>
+        </div>
+        <div class="panel">
+          <div class="panel__head"><div class="panel__title"><icon name="briefs" :size="15"/>Brief preview</div></div>
+          <div class="panel__body preview-pane"><brief-preview :brief="timeline.brief"/></div>
+        </div>
+      </div>
+
+      <div class="stack live-main">
         <div class="panel">
           <div class="panel__head"><div class="panel__title"><icon name="sources" :size="15"/>Sources</div></div>
           <div class="panel__body"><source-grid :sources="timeline.sources"/></div>
@@ -76,17 +87,6 @@ export const LiveView = {
         <div class="panel">
           <div class="panel__head"><div class="panel__title"><icon name="globe" :size="15"/>Crawl pages</div></div>
           <div class="panel__body"><crawl-feed :pages="timeline.pages"/></div>
-        </div>
-      </div>
-
-      <div class="stack" style="display:flex;flex-direction:column;gap:var(--sp-5)">
-        <div class="panel">
-          <div class="panel__head"><div class="panel__title"><icon name="brain" :size="15"/>LLM console</div><div class="panel__sub">{{ state.llm.model }}</div></div>
-          <div class="panel__body"><llm-console :phases="timeline.llmPhases"/></div>
-        </div>
-        <div class="panel">
-          <div class="panel__head"><div class="panel__title"><icon name="briefs" :size="15"/>Brief preview</div></div>
-          <div class="panel__body scroll-pane" style="max-height:560px"><brief-preview :brief="timeline.brief"/></div>
         </div>
       </div>
     </div>

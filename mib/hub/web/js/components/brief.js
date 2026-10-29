@@ -80,6 +80,7 @@ export const DocBody = {
       <template v-if="doc.markets && doc.markets.quotes && doc.markets.quotes.length">
         <h2><icon name="markets" :size="14"/>Markets</h2>
         <p v-if="doc.markets.note" class="muted" style="margin-bottom:10px">{{ doc.markets.note }}</p>
+        <div class="table-wrap">
         <table class="markets-table">
           <thead><tr><th>Symbol</th><th>Name</th><th>Price</th><th>Change</th></tr></thead>
           <tbody>
@@ -91,6 +92,7 @@ export const DocBody = {
             </tr>
           </tbody>
         </table>
+        </div>
       </template>
 
       <template v-if="doc.agenda && doc.agenda.events && doc.agenda.events.length">

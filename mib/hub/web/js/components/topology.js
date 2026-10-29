@@ -69,16 +69,6 @@ export const TopologyCard = {
       <div class="panel__sub">Worker &rarr; Brain &rarr; Telegram</div>
     </div>
     <div class="topology">
-      <svg width="0" height="0" style="position:absolute">
-        <defs>
-          <linearGradient id="edgeGradient" x1="0" y1="0" x2="1" y2="0">
-            <stop offset="0%" stop-color="#ffb35f"/>
-            <stop offset="55%" stop-color="#ff7a66"/>
-            <stop offset="100%" stop-color="#9b7bff"/>
-          </linearGradient>
-        </defs>
-      </svg>
-
       <!-- Worker node -->
       <div class="node node--worker" :class="{ 'node--offline': !worker || !worker.online }">
         <div class="node__head">
@@ -169,7 +159,7 @@ export const TopologyCard = {
             <div class="node__title">Telegram</div>
             <div class="node__sub">{{ telegram.bot_username ? '@'+telegram.bot_username : '07:30 daily delivery' }}</div>
           </div>
-          <div class="node__state"><status-pill :status="tgStatus.v" :pulse="tgStatus.pulse" :label="tgStatus.label"/></div>
+          <div class="node__state"><status-pill :status="tgStatus.v" :pulse="tgStatus.pulse" :label="tgStatus.short" :title="tgStatus.label"/></div>
         </div>
         <div class="node__foot" v-if="telegram.error" style="color:var(--error)">{{ telegram.error }}</div>
         <div class="node__foot" v-else-if="telegram.enabled && telegram.token_set && !telegram.chat_id">Open the bot and send <code>/start</code> to link.</div>

@@ -185,7 +185,7 @@ export const SettingsView = {
                   <button type="button" class="btn btn--icon btn--ghost" @click="removeCollectTime(i)" aria-label="Remove"><icon name="trash" :size="14"/></button>
                 </div>
               </div>
-              <button type="button" class="btn btn--sm" style="margin-top:8px" @click="addCollectTime"><icon name="plus" :size="13"/>Add time</button>
+              <button type="button" class="btn btn--sm btn--add" style="margin-top:8px" @click="addCollectTime"><icon name="plus" :size="13"/>Add time</button>
             </div>
             <div class="field-grid">
               <div class="field">
@@ -233,7 +233,7 @@ export const SettingsView = {
           </div>
           <div class="panel__body" style="display:flex;flex-direction:column;gap:var(--sp-4)">
             <secret-field label="Bot token" v-model="tgTokenEdit" :status="tgStatus" placeholder="123456:ABC-token"/>
-            <div class="field">
+            <div class="field" style="max-width:260px">
               <label class="field__label">Chat ID <span class="muted" style="font-weight:500;text-transform:none">(optional)</span></label>
               <input class="input" v-model="draft.delivery.telegram.chat_id" placeholder="-100123456789"/>
               <span class="field__hint">Leave empty and send /start to your bot to link this chat automatically.</span>

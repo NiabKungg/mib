@@ -219,14 +219,14 @@ export function scoreColor(score) {
   return `hsl(${Math.round(t * 130)} 70% 55%)`;
 }
 
-// Derives a short {v,label,pulse} status for the Telegram bot link, used by
-// the topbar pill, topology node and Settings status block. `v` matches the
-// status-pill variants (ok|warn|error|muted).
+// Derives a {v,label,short,pulse} status for the Telegram bot link, used by the topbar pill,
+// topology node and Settings status block. `v` matches the status-pill variants (ok|warn|error|muted);
+// `short` fits a pill on any screen, `label` is the full text (tooltip / status block).
 export function telegramStatus(t) {
-  if (!t || !t.enabled || !t.token_set) return { v: 'muted', label: 'not set up', pulse: false };
-  if (t.error) return { v: 'error', label: t.error, pulse: false };
-  if (!t.chat_id) return { v: 'warn', label: 'waiting for /start', pulse: true };
-  return { v: 'ok', label: t.bot_username ? `@${t.bot_username}` : 'linked', pulse: false };
+  if (!t || !t.enabled || !t.token_set) return { v: 'muted', label: 'not set up', short: 'not set up', pulse: false };
+  if (t.error) return { v: 'error', label: t.error, short: 'error', pulse: false };
+  if (!t.chat_id) return { v: 'warn', label: 'waiting for /start', short: 'send /start', pulse: true };
+  return { v: 'ok', label: t.bot_username ? `@${t.bot_username}` : 'linked', short: 'linked', pulse: false };
 }
 
 export function triggerLabel(trigger) {
